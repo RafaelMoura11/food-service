@@ -43,4 +43,34 @@ describe('guarda de rotas', () => {
 
     expect(router.currentRoute.value.name).toBe('dashboard')
   })
+
+  it('bloqueia o acesso a /usuarios para quem não tem nenhuma permissão do módulo', async () => {
+    http.get.mockResolvedValueOnce({ data: { id: 1, name: 'Admin', permissions: [] } })
+
+    const router = createAppRouter(createMemoryHistory())
+    router.push('/usuarios')
+    await router.isReady()
+
+    expect(router.currentRoute.value.name).toBe('dashboard')
+  })
+
+  it('permite o acesso a /usuarios para quem tem a permissão usuarios.listar', async () => {
+    http.get.mockResolvedValueOnce({ data: { id: 1, name: 'Admin', permissions: ['usuarios.listar'] } })
+
+    const router = createAppRouter(createMemoryHistory())
+    router.push('/usuarios')
+    await router.isReady()
+
+    expect(router.currentRoute.value.name).toBe('users')
+  })
+
+  it('permite o acesso a /usuarios para quem só tem a permissão usuarios.criar', async () => {
+    http.get.mockResolvedValueOnce({ data: { id: 1, name: 'Admin', permissions: ['usuarios.criar'] } })
+
+    const router = createAppRouter(createMemoryHistory())
+    router.push('/usuarios')
+    await router.isReady()
+
+    expect(router.currentRoute.value.name).toBe('users')
+  })
 })

@@ -26,6 +26,10 @@ async function logout() {
   user.value = null
 }
 
+function can(permission) {
+  return user.value?.permissions?.includes(permission) ?? false
+}
+
 export function useAuth() {
-  return { user, fetchUser, login, logout }
+  return { user, fetchUser, login, logout, can }
 }

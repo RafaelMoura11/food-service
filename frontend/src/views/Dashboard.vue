@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
-const { user, logout } = useAuth()
+const { user, logout, can } = useAuth()
 const router = useRouter()
 
 async function handleLogout() {
@@ -20,6 +20,9 @@ async function handleLogout() {
       </div>
       <div class="card-body">
         <p class="mb-0">Bem-vindo{{ user ? `, ${user.name}` : '' }}.</p>
+        <router-link v-if="can('usuarios.listar')" :to="{ name: 'users' }" class="btn btn-link ps-0">
+          Usuários
+        </router-link>
       </div>
     </div>
   </div>
