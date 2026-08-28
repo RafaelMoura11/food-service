@@ -86,8 +86,7 @@ describe('RolesList', () => {
     const wrapper = await mountRolesList()
     await flushPromises()
 
-    const link = wrapper.find('a.btn-outline-secondary')
-    expect(link.text()).toBe('Editar')
+    const link = wrapper.find('a[title="Editar"]')
     expect(link.attributes('href')).toBe('/funcoes/7/editar')
   })
 
@@ -98,8 +97,7 @@ describe('RolesList', () => {
     const wrapper = await mountRolesList()
     await flushPromises()
 
-    expect(wrapper.text()).not.toContain('Editar')
-    expect(wrapper.text()).not.toContain('Excluir')
+    expect(wrapper.find('.icon-btn').exists()).toBe(false)
   })
 
   it('remove uma função ao confirmar a exclusão', async () => {
@@ -112,10 +110,28 @@ describe('RolesList', () => {
     const wrapper = await mountRolesList()
     await flushPromises()
 
-    await wrapper.find('button.btn-outline-danger').trigger('click')
+    await wrapper.find('button[title="Excluir"]').trigger('click')
     await flushPromises()
 
     expect(http.delete).toHaveBeenCalledWith('/api/roles/1')
+    expect(wrapper.text()).not.toContain('Inspetor')
+  })
+
+  it('filtra funções pelo nome', async () => {
+    setPermissions(['funcoes.listar'])
+    http.get.mockResolvedValueOnce({
+      data: [
+        { id: 1, name: 'Inspetor', permissions: [] },
+        { id: 2, name: 'Gestor', permissions: [] },
+      ],
+    })
+
+    const wrapper = await mountRolesList()
+    await flushPromises()
+
+    await wrapper.find('input[type="search"]').setValue('gestor')
+
+    expect(wrapper.text()).toContain('Gestor')
     expect(wrapper.text()).not.toContain('Inspetor')
   })
 })

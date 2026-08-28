@@ -13,7 +13,7 @@ const visibleCadastraveis = computed(() =>
 </script>
 
 <template>
-  <aside class="app-sidebar shadow">
+  <aside class="app-sidebar bg-body shadow" data-bs-theme="dark">
     <div class="sidebar-brand">
       <router-link :to="{ name: 'dashboard' }" class="brand-link">
         <span class="brand-text fw-light">Food Service</span>
@@ -25,29 +25,38 @@ const visibleCadastraveis = computed(() =>
         <ul class="nav sidebar-menu flex-column" role="menu">
           <li class="nav-item">
             <router-link :to="{ name: 'dashboard' }" class="nav-link" active-class="active">
+              <i class="nav-icon bi bi-speedometer2" aria-hidden="true"></i>
               <p>Dashboard</p>
             </router-link>
           </li>
           <li v-if="canAny(['usuarios.listar', 'usuarios.criar', 'usuarios.editar', 'usuarios.excluir'])" class="nav-item">
             <router-link :to="{ name: 'users' }" class="nav-link" active-class="active">
+              <i class="nav-icon bi bi-people" aria-hidden="true"></i>
               <p>Usuários</p>
             </router-link>
           </li>
           <li v-if="canAny(['funcoes.listar', 'funcoes.criar', 'funcoes.editar', 'funcoes.excluir'])" class="nav-item">
             <router-link :to="{ name: 'roles' }" class="nav-link" active-class="active">
+              <i class="nav-icon bi bi-shield-lock" aria-hidden="true"></i>
               <p>Funções</p>
             </router-link>
           </li>
           <li v-if="visibleCadastraveis.length" class="nav-item" :class="{ 'menu-open': cadastraveisOpen }">
             <a href="#" class="nav-link" @click.prevent="cadastraveisOpen = !cadastraveisOpen">
+              <i class="nav-icon bi bi-folder2-open" aria-hidden="true"></i>
               <p>
                 Cadastráveis
-                <span class="nav-arrow">{{ cadastraveisOpen ? '▾' : '▸' }}</span>
+                <i
+                  class="nav-arrow bi"
+                  :class="cadastraveisOpen ? 'bi-chevron-down' : 'bi-chevron-right'"
+                  aria-hidden="true"
+                ></i>
               </p>
             </a>
             <ul v-show="cadastraveisOpen" class="nav nav-treeview">
               <li v-for="module in visibleCadastraveis" :key="module.slug" class="nav-item">
                 <router-link :to="{ name: `cadastraveis-${module.slug}` }" class="nav-link" active-class="active">
+                  <i class="nav-icon bi bi-dot" aria-hidden="true"></i>
                   <p>{{ module.label }}</p>
                 </router-link>
               </li>

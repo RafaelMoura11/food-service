@@ -91,8 +91,7 @@ describe('CadastravelItemsList', () => {
     const wrapper = await mountList()
     await flushPromises()
 
-    const link = wrapper.find('a.btn-outline-secondary')
-    expect(link.text()).toBe('Editar')
+    const link = wrapper.find('a[title="Editar"]')
     expect(link.attributes('href')).toBe('/cadastraveis/produtos/9/editar')
   })
 
@@ -103,8 +102,7 @@ describe('CadastravelItemsList', () => {
     const wrapper = await mountList()
     await flushPromises()
 
-    expect(wrapper.text()).not.toContain('Editar')
-    expect(wrapper.text()).not.toContain('Excluir')
+    expect(wrapper.find('.icon-btn').exists()).toBe(false)
   })
 
   it('remove um registro ao confirmar a exclusão', async () => {
@@ -117,10 +115,23 @@ describe('CadastravelItemsList', () => {
     const wrapper = await mountList()
     await flushPromises()
 
-    await wrapper.find('button.btn-outline-danger').trigger('click')
+    await wrapper.find('button[title="Excluir"]').trigger('click')
     await flushPromises()
 
     expect(http.delete).toHaveBeenCalledWith('/api/cadastraveis/produtos/1')
+    expect(wrapper.text()).not.toContain('Arroz')
+  })
+
+  it('filtra os registros pelo nome', async () => {
+    setPermissions(['produtos.listar'])
+    http.get.mockResolvedValueOnce({ data: [{ id: 1, name: 'Arroz' }, { id: 2, name: 'Feijão' }] })
+
+    const wrapper = await mountList()
+    await flushPromises()
+
+    await wrapper.find('input[type="search"]').setValue('feij')
+
+    expect(wrapper.text()).toContain('Feijão')
     expect(wrapper.text()).not.toContain('Arroz')
   })
 })

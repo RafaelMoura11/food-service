@@ -90,43 +90,39 @@ onMounted(async () => {
 
 <template>
   <div class="content-wrapper p-4">
-    <div class="card card-primary">
-      <div class="card-header">
-        <h3 class="card-title">{{ isEditing ? 'Editar Função' : 'Nova Função' }}</h3>
-      </div>
+    <h1 class="h3 mb-3">{{ isEditing ? 'Editar Função' : 'Nova Função' }}</h1>
 
-      <div class="card-body">
-        <p v-if="loading">Carregando…</p>
-        <p v-else-if="notFound" class="text-danger" role="alert">Função não encontrada.</p>
-        <template v-else>
-          <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
-          <form @submit.prevent="handleSubmit">
-            <div class="mb-3">
-              <label for="role-name" class="form-label">Nome</label>
-              <input id="role-name" v-model="form.name" type="text" class="form-control" required>
-              <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label d-block">Permissões</label>
-              <div v-for="(permissions, module) in permissionsByModule" :key="module" class="mb-2">
-                <strong class="d-block text-capitalize">{{ module }}</strong>
-                <div v-for="permission in permissions" :key="permission.id" class="form-check form-check-inline">
-                  <input
-                    :id="`permission-${permission.id}`"
-                    v-model="form.permissionIds"
-                    type="checkbox"
-                    class="form-check-input"
-                    :value="permission.id"
-                  >
-                  <label :for="`permission-${permission.id}`" class="form-check-label">{{ permission.name }}</label>
-                </div>
+    <div class="bg-white rounded shadow-sm p-4">
+      <p v-if="loading">Carregando…</p>
+      <p v-else-if="notFound" class="text-danger" role="alert">Função não encontrada.</p>
+      <template v-else>
+        <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
+        <form @submit.prevent="handleSubmit">
+          <div class="mb-3">
+            <label for="role-name" class="form-label">Nome</label>
+            <input id="role-name" v-model="form.name" type="text" class="form-control" required>
+            <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label d-block">Permissões</label>
+            <div v-for="(permissions, module) in permissionsByModule" :key="module" class="mb-2">
+              <strong class="d-block text-capitalize">{{ module }}</strong>
+              <div v-for="permission in permissions" :key="permission.id" class="form-check form-check-inline">
+                <input
+                  :id="`permission-${permission.id}`"
+                  v-model="form.permissionIds"
+                  type="checkbox"
+                  class="form-check-input"
+                  :value="permission.id"
+                >
+                <label :for="`permission-${permission.id}`" class="form-check-label">{{ permission.name }}</label>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
-            <router-link :to="{ name: 'roles' }" class="btn btn-outline-secondary ms-2">Cancelar</router-link>
-          </form>
-        </template>
-      </div>
+          </div>
+          <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
+          <router-link :to="{ name: 'roles' }" class="btn btn-outline-secondary ms-2">Cancelar</router-link>
+        </form>
+      </template>
     </div>
   </div>
 </template>

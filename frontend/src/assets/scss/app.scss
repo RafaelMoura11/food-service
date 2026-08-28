@@ -2,3 +2,41 @@
 // junto). Nenhum JS do AdminLTE nem do Bootstrap é carregado — a interatividade
 // (sidebar, tema, menus) é implementada como estado reativo do Vue (ADR-0002).
 @import "admin-lte/src/scss/adminlte";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+// Avatar (iniciais) e botões de ação em ícone circular: repetidos em todo
+// cabeçalho autenticado e em toda tela de listagem (Usuários, Funções, cada
+// módulo Cadastrável), então vivem aqui em vez de <style scoped> por componente.
+.avatar-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.icon-btn-secondary {
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+}
+
+.icon-btn-danger {
+  background-color: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-text-emphasis);
+}

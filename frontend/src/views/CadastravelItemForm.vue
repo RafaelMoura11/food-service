@@ -66,29 +66,25 @@ onMounted(() => {
 
 <template>
   <div class="content-wrapper p-4">
-    <div class="card card-primary">
-      <div class="card-header">
-        <h3 class="card-title">{{ isEditing ? `Editar registro de ${label}` : `Novo registro de ${label}` }}</h3>
-      </div>
+    <h1 class="h3 mb-3">{{ isEditing ? `Editar registro de ${label}` : `Novo registro de ${label}` }}</h1>
 
-      <div class="card-body">
-        <p v-if="loading">Carregando…</p>
-        <p v-else-if="notFound" class="text-danger" role="alert">Registro não encontrado.</p>
-        <template v-else>
-          <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
-          <form @submit.prevent="handleSubmit">
-            <div class="mb-3">
-              <label for="item-name" class="form-label">Nome</label>
-              <input id="item-name" v-model="form.name" type="text" class="form-control" required>
-              <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
-            </div>
-            <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
-            <router-link :to="{ name: `cadastraveis-${module}` }" class="btn btn-outline-secondary ms-2">
-              Cancelar
-            </router-link>
-          </form>
-        </template>
-      </div>
+    <div class="bg-white rounded shadow-sm p-4">
+      <p v-if="loading">Carregando…</p>
+      <p v-else-if="notFound" class="text-danger" role="alert">Registro não encontrado.</p>
+      <template v-else>
+        <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
+        <form @submit.prevent="handleSubmit">
+          <div class="mb-3">
+            <label for="item-name" class="form-label">Nome</label>
+            <input id="item-name" v-model="form.name" type="text" class="form-control" required>
+            <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
+          </div>
+          <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
+          <router-link :to="{ name: `cadastraveis-${module}` }" class="btn btn-outline-secondary ms-2">
+            Cancelar
+          </router-link>
+        </form>
+      </template>
     </div>
   </div>
 </template>

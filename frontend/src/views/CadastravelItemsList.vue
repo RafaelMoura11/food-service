@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import http from '../api/http'
+import Pagination from '../components/Pagination.vue'
+import { usePagedList } from '../composables/usePagedList'
 import { useAuth } from '../composables/useAuth'
 
 const props = defineProps({
@@ -13,6 +15,11 @@ const { can } = useAuth()
 const items = ref([])
 const loading = ref(true)
 const error = ref('')
+
+const { search, page, totalPages, filtered, paginated, rangeStart, rangeEnd } = usePagedList(items, {
+  searchFields: ['name'],
+  pageSize: 10,
+})
 
 function canModule(action) {
   return can(`${props.module}.${action}`)
@@ -54,25 +61,26 @@ onMounted(loadItems)
 
 <template>
   <div class="content-wrapper p-4">
-    <div class="card card-primary">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">{{ label }}</h3>
-        <router-link
-          v-if="canModule('criar')"
-          :to="{ name: `cadastraveis-${module}-novo` }"
-          class="btn btn-primary btn-sm"
-        >
-          Novo registro
-        </router-link>
-      </div>
+    <h1 class="h3 mb-3">{{ label }}</h1>
 
-      <div class="card-body">
-        <p v-if="!canModule('listar')" class="text-muted mb-0">
-          Você não tem permissão para listar os registros de {{ label }}.
-        </p>
-        <p v-else-if="error" class="text-danger" role="alert">{{ error }}</p>
-        <p v-else-if="loading">Carregando…</p>
-        <table v-else class="table">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+      <router-link v-if="canModule('criar')" :to="{ name: `cadastraveis-${module}-novo` }" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Novo registro
+      </router-link>
+      <span v-else></span>
+      <div style="max-width: 260px; width: 100%;">
+        <input v-model="search" type="search" class="form-control" placeholder="Buscar por nome">
+      </div>
+    </div>
+
+    <p v-if="!canModule('listar')" class="text-muted mb-0">
+      Você não tem permissão para listar os registros de {{ label }}.
+    </p>
+    <p v-else-if="error" class="text-danger" role="alert">{{ error }}</p>
+    <p v-else-if="loading">Carregando…</p>
+    <template v-else>
+      <div class="table-responsive bg-white rounded shadow-sm">
+        <table class="table align-middle mb-0">
           <thead>
             <tr>
               <th>Nome</th>
@@ -80,29 +88,41 @@ onMounted(loadItems)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in items" :key="item.id">
+            <tr v-for="item in paginated" :key="item.id">
               <td>{{ item.name }}</td>
               <td v-if="canModule('editar') || canModule('excluir')">
                 <router-link
                   v-if="canModule('editar')"
                   :to="{ name: `cadastraveis-${module}-editar`, params: { id: item.id } }"
-                  class="btn btn-outline-secondary btn-sm me-2"
+                  class="icon-btn icon-btn-secondary"
+                  title="Editar"
+                  aria-label="Editar"
                 >
-                  Editar
+                  <i class="bi bi-pencil" aria-hidden="true"></i>
                 </router-link>
                 <button
                   v-if="canModule('excluir')"
                   type="button"
-                  class="btn btn-outline-danger btn-sm"
+                  class="icon-btn icon-btn-danger"
+                  title="Excluir"
+                  aria-label="Excluir"
                   @click="handleDelete(item)"
                 >
-                  Excluir
+                  <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
+
+      <div v-if="filtered.length" class="d-flex justify-content-between align-items-center mt-3">
+        <span class="text-muted small">
+          Exibindo {{ rangeStart }}-{{ rangeEnd }} de {{ filtered.length }} registros
+        </span>
+        <Pagination :page="page" :total-pages="totalPages" @update:page="page = $event" />
+      </div>
+      <p v-else class="text-muted">Nenhum registro encontrado.</p>
+    </template>
   </div>
 </template>

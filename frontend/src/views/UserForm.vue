@@ -113,94 +113,90 @@ onMounted(async () => {
 
 <template>
   <div class="content-wrapper p-4">
-    <div class="card card-primary">
-      <div class="card-header">
-        <h3 class="card-title">{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
-      </div>
+    <h1 class="h3 mb-3">{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h1>
 
-      <div class="card-body">
-        <p v-if="loading">Carregando…</p>
-        <p v-else-if="notFound" class="text-danger" role="alert">Usuário não encontrado.</p>
-        <template v-else>
-          <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
+    <div class="bg-white rounded shadow-sm p-4">
+      <p v-if="loading">Carregando…</p>
+      <p v-else-if="notFound" class="text-danger" role="alert">Usuário não encontrado.</p>
+      <template v-else>
+        <p v-if="loadError" class="text-danger" role="alert">{{ loadError }}</p>
 
-          <form v-if="showDataForm" @submit.prevent="handleSubmit">
-            <div class="mb-3">
-              <label for="user-name" class="form-label">Nome</label>
-              <input id="user-name" v-model="form.name" type="text" class="form-control" required>
-              <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
-            </div>
-            <div class="mb-3">
-              <label for="user-email" class="form-label">E-mail</label>
-              <input id="user-email" v-model="form.email" type="email" class="form-control" required>
-              <p v-if="formErrors.email" class="text-danger">{{ formErrors.email[0] }}</p>
-            </div>
-            <div class="mb-3">
-              <label for="user-password" class="form-label">
-                {{ isEditing ? 'Nova senha (opcional)' : 'Senha' }}
-              </label>
-              <input
-                id="user-password"
-                v-model="form.password"
-                type="password"
-                class="form-control"
-                :required="!isEditing"
-              >
-              <p v-if="formErrors.password" class="text-danger">{{ formErrors.password[0] }}</p>
-            </div>
-            <div class="mb-3">
-              <label for="user-password-confirmation" class="form-label">Confirmar senha</label>
-              <input
-                id="user-password-confirmation"
-                v-model="form.password_confirmation"
-                type="password"
-                class="form-control"
-                :required="!isEditing || !!form.password"
-              >
-            </div>
-
-            <div v-if="!isEditing && showRoles" class="mb-3">
-              <label class="form-label d-block">Funções</label>
-              <div v-for="role in availableRoles" :key="role.id" class="form-check">
-                <input
-                  :id="`user-role-${role.id}`"
-                  v-model="selectedRoleIds"
-                  type="checkbox"
-                  class="form-check-input"
-                  :value="role.id"
-                >
-                <label :for="`user-role-${role.id}`" class="form-check-label">{{ role.name }}</label>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
-            <router-link :to="{ name: 'users' }" class="btn btn-outline-secondary ms-2">Cancelar</router-link>
-          </form>
-
-          <div v-if="isEditing && showRoles" class="mt-4">
-            <h5>Funções</h5>
-            <p v-if="rolesError" class="text-danger" role="alert">{{ rolesError }}</p>
-            <form @submit.prevent="handleRolesSubmit">
-              <div v-for="role in availableRoles" :key="role.id" class="form-check">
-                <input
-                  :id="`user-role-${role.id}`"
-                  v-model="selectedRoleIds"
-                  type="checkbox"
-                  class="form-check-input"
-                  :value="role.id"
-                >
-                <label :for="`user-role-${role.id}`" class="form-check-label">{{ role.name }}</label>
-              </div>
-              <button type="submit" class="btn btn-primary btn-sm mt-2" :disabled="rolesSubmitting">
-                Salvar Funções
-              </button>
-              <router-link :to="{ name: 'users' }" class="btn btn-outline-secondary btn-sm mt-2 ms-2">
-                Cancelar
-              </router-link>
-            </form>
+        <form v-if="showDataForm" @submit.prevent="handleSubmit">
+          <div class="mb-3">
+            <label for="user-name" class="form-label">Nome</label>
+            <input id="user-name" v-model="form.name" type="text" class="form-control" required>
+            <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
           </div>
-        </template>
-      </div>
+          <div class="mb-3">
+            <label for="user-email" class="form-label">E-mail</label>
+            <input id="user-email" v-model="form.email" type="email" class="form-control" required>
+            <p v-if="formErrors.email" class="text-danger">{{ formErrors.email[0] }}</p>
+          </div>
+          <div class="mb-3">
+            <label for="user-password" class="form-label">
+              {{ isEditing ? 'Nova senha (opcional)' : 'Senha' }}
+            </label>
+            <input
+              id="user-password"
+              v-model="form.password"
+              type="password"
+              class="form-control"
+              :required="!isEditing"
+            >
+            <p v-if="formErrors.password" class="text-danger">{{ formErrors.password[0] }}</p>
+          </div>
+          <div class="mb-3">
+            <label for="user-password-confirmation" class="form-label">Confirmar senha</label>
+            <input
+              id="user-password-confirmation"
+              v-model="form.password_confirmation"
+              type="password"
+              class="form-control"
+              :required="!isEditing || !!form.password"
+            >
+          </div>
+
+          <div v-if="!isEditing && showRoles" class="mb-3">
+            <label class="form-label d-block">Funções</label>
+            <div v-for="role in availableRoles" :key="role.id" class="form-check">
+              <input
+                :id="`user-role-${role.id}`"
+                v-model="selectedRoleIds"
+                type="checkbox"
+                class="form-check-input"
+                :value="role.id"
+              >
+              <label :for="`user-role-${role.id}`" class="form-check-label">{{ role.name }}</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
+          <router-link :to="{ name: 'users' }" class="btn btn-outline-secondary ms-2">Cancelar</router-link>
+        </form>
+
+        <div v-if="isEditing && showRoles" class="mt-4">
+          <h5>Funções</h5>
+          <p v-if="rolesError" class="text-danger" role="alert">{{ rolesError }}</p>
+          <form @submit.prevent="handleRolesSubmit">
+            <div v-for="role in availableRoles" :key="role.id" class="form-check">
+              <input
+                :id="`user-role-${role.id}`"
+                v-model="selectedRoleIds"
+                type="checkbox"
+                class="form-check-input"
+                :value="role.id"
+              >
+              <label :for="`user-role-${role.id}`" class="form-check-label">{{ role.name }}</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mt-2" :disabled="rolesSubmitting">
+              Salvar Funções
+            </button>
+            <router-link :to="{ name: 'users' }" class="btn btn-outline-secondary btn-sm mt-2 ms-2">
+              Cancelar
+            </router-link>
+          </form>
+        </div>
+      </template>
     </div>
   </div>
 </template>

@@ -1,9 +1,12 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
-const { logout } = useAuth()
+const { user, logout } = useAuth()
 const router = useRouter()
+
+const initial = computed(() => (user.value?.name ?? '?').trim().charAt(0).toUpperCase())
 
 async function handleLogout() {
   await logout()
@@ -12,9 +15,16 @@ async function handleLogout() {
 </script>
 
 <template>
-  <nav class="app-header navbar navbar-expand bg-body border-bottom">
+  <nav class="app-header navbar navbar-expand bg-body">
     <div class="container-fluid justify-content-end">
-      <button type="button" class="btn btn-outline-secondary btn-sm" @click="handleLogout">Sair</button>
+      <ul class="navbar-nav align-items-center">
+        <li class="nav-item">
+          <span class="avatar-circle" aria-hidden="true">{{ initial }}</span>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link btn btn-link" @click="handleLogout">Sair</button>
+        </li>
+      </ul>
     </div>
   </nav>
 </template>
