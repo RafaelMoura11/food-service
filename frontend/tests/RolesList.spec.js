@@ -1,8 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory } from 'vue-router'
 import http from '../src/api/http'
 import { useAuth } from '../src/composables/useAuth'
-import Roles from '../src/views/Roles.vue'
+import RolesList from '../src/views/RolesList.vue'
+import { createAppRouter } from '../src/router'
 
 vi.mock('../src/api/http', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
@@ -12,7 +14,15 @@ function setPermissions(permissions) {
   useAuth().user.value = { id: 1, name: 'Admin', permissions }
 }
 
-describe('Roles', () => {
+async function mountRolesList() {
+  const router = createAppRouter(createMemoryHistory())
+  router.push('/funcoes')
+  await router.isReady()
+
+  return mount(RolesList, { global: { plugins: [router] } })
+}
+
+describe('RolesList', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useAuth().user.value = undefined
@@ -27,7 +37,7 @@ describe('Roles', () => {
       ],
     })
 
-    const wrapper = mount(Roles)
+    const wrapper = await mountRolesList()
     await flushPromises()
 
     expect(http.get).toHaveBeenCalledWith('/api/roles')
@@ -36,64 +46,56 @@ describe('Roles', () => {
     expect(wrapper.text()).toContain('Gestor')
   })
 
-  it('permite cadastrar mesmo sem a permissão de listar, sem carregar a tabela', async () => {
+  it('linka o botão de nova função para a tela de criação dedicada', async () => {
+    setPermissions(['funcoes.listar', 'funcoes.criar'])
+    http.get.mockResolvedValueOnce({ data: [] })
+
+    const wrapper = await mountRolesList()
+    await flushPromises()
+
+    const link = wrapper.find('a.btn-primary')
+    expect(link.text()).toBe('Nova Função')
+    expect(link.attributes('href')).toBe('/funcoes/novo')
+  })
+
+  it('esconde o link de nova função para quem não tem permissão de criar', async () => {
+    setPermissions(['funcoes.listar'])
+    http.get.mockResolvedValueOnce({ data: [] })
+
+    const wrapper = await mountRolesList()
+    await flushPromises()
+
+    expect(wrapper.find('a.btn-primary').exists()).toBe(false)
+  })
+
+  it('permite acessar mesmo sem a permissão de listar, sem carregar a tabela', async () => {
     setPermissions(['funcoes.criar'])
 
-    const wrapper = mount(Roles)
+    const wrapper = await mountRolesList()
     await flushPromises()
 
     expect(http.get).not.toHaveBeenCalled()
     expect(wrapper.find('table').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Nova Função')
     expect(wrapper.text()).toContain('Você não tem permissão para listar')
   })
 
-  it('esconde o botão de nova função para quem não tem permissão de criar', async () => {
-    setPermissions(['funcoes.listar'])
-    http.get.mockResolvedValueOnce({ data: [] })
+  it('linka o botão de editar para a tela de edição da função, com o id certo', async () => {
+    setPermissions(['funcoes.listar', 'funcoes.editar'])
+    http.get.mockResolvedValueOnce({ data: [{ id: 7, name: 'Inspetor', permissions: [] }] })
 
-    const wrapper = mount(Roles)
+    const wrapper = await mountRolesList()
     await flushPromises()
 
-    expect(wrapper.text()).not.toContain('Nova Função')
-  })
-
-  it('cadastra uma nova função com as permissões selecionadas', async () => {
-    setPermissions(['funcoes.listar', 'funcoes.criar'])
-    http.get.mockResolvedValueOnce({ data: [] })
-    http.get.mockResolvedValueOnce({
-      data: [
-        { id: 1, name: 'usuarios.listar' },
-        { id: 2, name: 'usuarios.criar' },
-      ],
-    })
-    http.post.mockResolvedValueOnce({
-      data: { id: 3, name: 'Inspetor', permissions: [{ id: 1, name: 'usuarios.listar' }] },
-    })
-    http.get.mockResolvedValueOnce({
-      data: [{ id: 3, name: 'Inspetor', permissions: [{ id: 1, name: 'usuarios.listar' }] }],
-    })
-
-    const wrapper = mount(Roles)
-    await flushPromises()
-
-    await wrapper.find('button.btn-primary.btn-sm').trigger('click')
-    await flushPromises()
-
-    await wrapper.find('#role-name').setValue('Inspetor')
-    await wrapper.find('#permission-1').setValue(true)
-    await wrapper.find('form').trigger('submit.prevent')
-    await flushPromises()
-
-    expect(http.post).toHaveBeenCalledWith('/api/roles', { name: 'Inspetor', permissions: [1] })
-    expect(wrapper.text()).toContain('Inspetor')
+    const link = wrapper.find('a.btn-outline-secondary')
+    expect(link.text()).toBe('Editar')
+    expect(link.attributes('href')).toBe('/funcoes/7/editar')
   })
 
   it('esconde as ações de editar e excluir para quem não tem permissão', async () => {
     setPermissions(['funcoes.listar'])
     http.get.mockResolvedValueOnce({ data: [{ id: 1, name: 'Inspetor', permissions: [] }] })
 
-    const wrapper = mount(Roles)
+    const wrapper = await mountRolesList()
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Editar')
@@ -107,7 +109,7 @@ describe('Roles', () => {
     http.get.mockResolvedValueOnce({ data: [] })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
 
-    const wrapper = mount(Roles)
+    const wrapper = await mountRolesList()
     await flushPromises()
 
     await wrapper.find('button.btn-outline-danger').trigger('click')

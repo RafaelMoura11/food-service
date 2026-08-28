@@ -1,8 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory } from 'vue-router'
 import http from '../src/api/http'
 import { useAuth } from '../src/composables/useAuth'
-import CadastravelItems from '../src/views/CadastravelItems.vue'
+import CadastravelItemsList from '../src/views/CadastravelItemsList.vue'
+import { createAppRouter } from '../src/router'
 
 vi.mock('../src/api/http', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
@@ -12,11 +14,15 @@ function setPermissions(permissions) {
   useAuth().user.value = { id: 1, name: 'Admin', permissions }
 }
 
-function mountItems(module = 'produtos', label = 'Produtos') {
-  return mount(CadastravelItems, { props: { module, label } })
+async function mountList(module = 'produtos', label = 'Produtos') {
+  const router = createAppRouter(createMemoryHistory())
+  router.push(`/cadastraveis/${module}`)
+  await router.isReady()
+
+  return mount(CadastravelItemsList, { props: { module, label }, global: { plugins: [router] } })
 }
 
-describe('CadastravelItems', () => {
+describe('CadastravelItemsList', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useAuth().user.value = undefined
@@ -26,7 +32,7 @@ describe('CadastravelItems', () => {
     setPermissions(['produtos.listar'])
     http.get.mockResolvedValueOnce({ data: [{ id: 1, name: 'Arroz' }, { id: 2, name: 'Feijão' }] })
 
-    const wrapper = mountItems()
+    const wrapper = await mountList()
     await flushPromises()
 
     expect(http.get).toHaveBeenCalledWith('/api/cadastraveis/produtos')
@@ -39,59 +45,62 @@ describe('CadastravelItems', () => {
     setPermissions(['filial.listar'])
     http.get.mockResolvedValueOnce({ data: [] })
 
-    mountItems('filial', 'Filial')
+    await mountList('filial', 'Filial')
     await flushPromises()
 
     expect(http.get).toHaveBeenCalledWith('/api/cadastraveis/filial')
   })
 
-  it('permite cadastrar mesmo sem a permissão de listar, sem carregar a tabela', async () => {
+  it('linka o botão de novo registro para a tela de criação dedicada do módulo', async () => {
+    setPermissions(['produtos.listar', 'produtos.criar'])
+    http.get.mockResolvedValueOnce({ data: [] })
+
+    const wrapper = await mountList()
+    await flushPromises()
+
+    const link = wrapper.find('a.btn-primary')
+    expect(link.text()).toBe('Novo registro')
+    expect(link.attributes('href')).toBe('/cadastraveis/produtos/novo')
+  })
+
+  it('esconde o link de novo registro para quem não tem permissão de criar', async () => {
+    setPermissions(['produtos.listar'])
+    http.get.mockResolvedValueOnce({ data: [] })
+
+    const wrapper = await mountList()
+    await flushPromises()
+
+    expect(wrapper.find('a.btn-primary').exists()).toBe(false)
+  })
+
+  it('permite acessar mesmo sem a permissão de listar, sem carregar a tabela', async () => {
     setPermissions(['produtos.criar'])
 
-    const wrapper = mountItems()
+    const wrapper = await mountList()
     await flushPromises()
 
     expect(http.get).not.toHaveBeenCalled()
     expect(wrapper.find('table').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Novo registro')
     expect(wrapper.text()).toContain('Você não tem permissão para listar')
   })
 
-  it('esconde o botão de novo registro para quem não tem permissão de criar', async () => {
-    setPermissions(['produtos.listar'])
-    http.get.mockResolvedValueOnce({ data: [] })
+  it('linka o botão de editar para a tela de edição do registro, com o id certo', async () => {
+    setPermissions(['produtos.listar', 'produtos.editar'])
+    http.get.mockResolvedValueOnce({ data: [{ id: 9, name: 'Arroz' }] })
 
-    const wrapper = mountItems()
+    const wrapper = await mountList()
     await flushPromises()
 
-    expect(wrapper.text()).not.toContain('Novo registro')
-  })
-
-  it('cadastra um novo registro no módulo correto', async () => {
-    setPermissions(['produtos.listar', 'produtos.criar'])
-    http.get.mockResolvedValueOnce({ data: [] })
-    http.post.mockResolvedValueOnce({ data: { id: 3, name: 'Arroz' } })
-    http.get.mockResolvedValueOnce({ data: [{ id: 3, name: 'Arroz' }] })
-
-    const wrapper = mountItems()
-    await flushPromises()
-
-    await wrapper.find('button.btn-primary.btn-sm').trigger('click')
-    await flushPromises()
-
-    await wrapper.find('#item-name').setValue('Arroz')
-    await wrapper.find('form').trigger('submit.prevent')
-    await flushPromises()
-
-    expect(http.post).toHaveBeenCalledWith('/api/cadastraveis/produtos', { name: 'Arroz' })
-    expect(wrapper.text()).toContain('Arroz')
+    const link = wrapper.find('a.btn-outline-secondary')
+    expect(link.text()).toBe('Editar')
+    expect(link.attributes('href')).toBe('/cadastraveis/produtos/9/editar')
   })
 
   it('esconde as ações de editar e excluir para quem não tem permissão', async () => {
     setPermissions(['produtos.listar'])
     http.get.mockResolvedValueOnce({ data: [{ id: 1, name: 'Arroz' }] })
 
-    const wrapper = mountItems()
+    const wrapper = await mountList()
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Editar')
@@ -105,7 +114,7 @@ describe('CadastravelItems', () => {
     http.get.mockResolvedValueOnce({ data: [] })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
 
-    const wrapper = mountItems()
+    const wrapper = await mountList()
     await flushPromises()
 
     await wrapper.find('button.btn-outline-danger').trigger('click')

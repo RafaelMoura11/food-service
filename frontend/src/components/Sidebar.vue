@@ -24,17 +24,17 @@ const visibleCadastraveis = computed(() =>
       <nav class="mt-2">
         <ul class="nav sidebar-menu flex-column" role="menu">
           <li class="nav-item">
-            <router-link :to="{ name: 'dashboard' }" class="nav-link">
+            <router-link :to="{ name: 'dashboard' }" class="nav-link" active-class="active">
               <p>Dashboard</p>
             </router-link>
           </li>
           <li v-if="canAny(['usuarios.listar', 'usuarios.criar', 'usuarios.editar', 'usuarios.excluir'])" class="nav-item">
-            <router-link :to="{ name: 'users' }" class="nav-link">
+            <router-link :to="{ name: 'users' }" class="nav-link" active-class="active">
               <p>Usuários</p>
             </router-link>
           </li>
           <li v-if="canAny(['funcoes.listar', 'funcoes.criar', 'funcoes.editar', 'funcoes.excluir'])" class="nav-item">
-            <router-link :to="{ name: 'roles' }" class="nav-link">
+            <router-link :to="{ name: 'roles' }" class="nav-link" active-class="active">
               <p>Funções</p>
             </router-link>
           </li>
@@ -47,7 +47,7 @@ const visibleCadastraveis = computed(() =>
             </a>
             <ul v-show="cadastraveisOpen" class="nav nav-treeview">
               <li v-for="module in visibleCadastraveis" :key="module.slug" class="nav-item">
-                <router-link :to="{ name: `cadastraveis-${module.slug}` }" class="nav-link">
+                <router-link :to="{ name: `cadastraveis-${module.slug}` }" class="nav-link" active-class="active">
                   <p>{{ module.label }}</p>
                 </router-link>
               </li>

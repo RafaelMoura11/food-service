@@ -22,9 +22,19 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = User::create($request->validated());
+        $data = $request->validated();
+        $roles = $data['roles'] ?? null;
+        unset($data['roles']);
 
-        return response()->json($user, 201);
+        $user = User::create($data);
+
+        // Atribuir Funções na criação exige a mesma Permissão que atribuí-las
+        // depois exige (UserRoleController); usuarios.criar sozinho não basta.
+        if ($roles !== null && Gate::allows('funcoes.editar')) {
+            $user->syncRoles($roles);
+        }
+
+        return response()->json($user->load('roles:id,name'), 201);
     }
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse

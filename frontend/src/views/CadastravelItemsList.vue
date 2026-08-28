@@ -14,12 +14,6 @@ const items = ref([])
 const loading = ref(true)
 const error = ref('')
 
-const showForm = ref(false)
-const editingId = ref(null)
-const form = ref({ name: '' })
-const formErrors = ref({})
-const submitting = ref(false)
-
 function canModule(action) {
   return can(`${props.module}.${action}`)
 }
@@ -39,51 +33,6 @@ async function loadItems() {
     error.value = `Não foi possível carregar os registros de ${props.label}.`
   } finally {
     loading.value = false
-  }
-}
-
-function resetForm() {
-  form.value.name = ''
-  formErrors.value = {}
-}
-
-function openCreateForm() {
-  editingId.value = null
-  resetForm()
-  showForm.value = true
-}
-
-function openEditForm(item) {
-  editingId.value = item.id
-  resetForm()
-  form.value.name = item.name
-  showForm.value = true
-}
-
-function closeForm() {
-  showForm.value = false
-  editingId.value = null
-  resetForm()
-}
-
-async function handleSubmit() {
-  submitting.value = true
-  formErrors.value = {}
-
-  const payload = { name: form.value.name }
-
-  try {
-    if (editingId.value) {
-      await http.put(`/api/cadastraveis/${props.module}/${editingId.value}`, payload)
-    } else {
-      await http.post(`/api/cadastraveis/${props.module}`, payload)
-    }
-    closeForm()
-    await loadItems()
-  } catch (err) {
-    formErrors.value = err.response?.data?.errors ?? {}
-  } finally {
-    submitting.value = false
   }
 }
 
@@ -108,26 +57,13 @@ onMounted(loadItems)
     <div class="card card-primary">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title">{{ label }}</h3>
-        <button
+        <router-link
           v-if="canModule('criar')"
-          type="button"
+          :to="{ name: `cadastraveis-${module}-novo` }"
           class="btn btn-primary btn-sm"
-          @click="openCreateForm"
         >
           Novo registro
-        </button>
-      </div>
-
-      <div v-if="showForm" class="card-body border-bottom">
-        <form @submit.prevent="handleSubmit">
-          <div class="mb-3">
-            <label for="item-name" class="form-label">Nome</label>
-            <input id="item-name" v-model="form.name" type="text" class="form-control" required>
-            <p v-if="formErrors.name" class="text-danger">{{ formErrors.name[0] }}</p>
-          </div>
-          <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
-          <button type="button" class="btn btn-outline-secondary ms-2" @click="closeForm">Cancelar</button>
-        </form>
+        </router-link>
       </div>
 
       <div class="card-body">
@@ -147,14 +83,13 @@ onMounted(loadItems)
             <tr v-for="item in items" :key="item.id">
               <td>{{ item.name }}</td>
               <td v-if="canModule('editar') || canModule('excluir')">
-                <button
+                <router-link
                   v-if="canModule('editar')"
-                  type="button"
+                  :to="{ name: `cadastraveis-${module}-editar`, params: { id: item.id } }"
                   class="btn btn-outline-secondary btn-sm me-2"
-                  @click="openEditForm(item)"
                 >
                   Editar
-                </button>
+                </router-link>
                 <button
                   v-if="canModule('excluir')"
                   type="button"
