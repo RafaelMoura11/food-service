@@ -1,7 +1,5 @@
-import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory } from 'vue-router'
-import App from '../src/App.vue'
 import http from '../src/api/http'
 import { useAuth } from '../src/composables/useAuth'
 import { createAppRouter } from '../src/router'
@@ -10,35 +8,39 @@ vi.mock('../src/api/http', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }))
 
-describe('App', () => {
+describe('guarda de rotas', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useAuth().user.value = undefined
   })
 
-  it('redireciona para a tela de login quando não há sessão válida', async () => {
+  it('redireciona para o login ao acessar uma rota protegida sem sessão válida', async () => {
     http.get.mockRejectedValueOnce({ response: { status: 401 } })
 
     const router = createAppRouter(createMemoryHistory())
-    const wrapper = mount(App, { global: { plugins: [router] } })
-
     router.push('/')
     await router.isReady()
-    await flushPromises()
 
-    expect(wrapper.find('#email').exists()).toBe(true)
+    expect(router.currentRoute.value.name).toBe('login')
   })
 
-  it('renderiza o dashboard quando há uma sessão válida', async () => {
+  it('permite o acesso ao dashboard quando há uma sessão válida', async () => {
     http.get.mockResolvedValueOnce({ data: { id: 1, name: 'Admin' } })
 
     const router = createAppRouter(createMemoryHistory())
-    const wrapper = mount(App, { global: { plugins: [router] } })
-
     router.push('/')
     await router.isReady()
-    await flushPromises()
 
-    expect(wrapper.text()).toContain('Dashboard')
+    expect(router.currentRoute.value.name).toBe('dashboard')
+  })
+
+  it('redireciona um usuário já autenticado que acessa /login de volta ao dashboard', async () => {
+    http.get.mockResolvedValueOnce({ data: { id: 1, name: 'Admin' } })
+
+    const router = createAppRouter(createMemoryHistory())
+    router.push('/login')
+    await router.isReady()
+
+    expect(router.currentRoute.value.name).toBe('dashboard')
   })
 })
