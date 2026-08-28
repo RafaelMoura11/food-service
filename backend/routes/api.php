@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedUserController;
+use App\Http\Controllers\CadastravelItemController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -27,4 +28,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // de atribuição; as mutações seguem protegidas pelas rotas acima.
     Route::get('/roles/options', [RoleController::class, 'options']);
     Route::get('/permissions', [PermissionController::class, 'index']);
+
+    // Um grupo de rotas id+nome por módulo Cadastrável (config/cadastraveis.php),
+    // cada um com Permissões independentes (slug.ação). Novo módulo Cadastrável =
+    // nova linha em config/cadastraveis.php, sem tocar em rota/controller/tela.
+    foreach (config('cadastraveis.modules') as $slug => $label) {
+        Route::prefix("cadastraveis/{$slug}")->name("cadastraveis.{$slug}.")->group(function () use ($slug) {
+            Route::get('/', [CadastravelItemController::class, 'index'])
+                ->defaults('module', $slug)
+                ->middleware("can:{$slug}.listar")
+                ->name('index');
+            Route::post('/', [CadastravelItemController::class, 'store'])
+                ->defaults('module', $slug)
+                ->middleware("can:{$slug}.criar")
+                ->name('store');
+            Route::put('/{item}', [CadastravelItemController::class, 'update'])
+                ->defaults('module', $slug)
+                ->middleware("can:{$slug}.editar")
+                ->name('update');
+            Route::delete('/{item}', [CadastravelItemController::class, 'destroy'])
+                ->defaults('module', $slug)
+                ->middleware("can:{$slug}.excluir")
+                ->name('destroy');
+        });
+    }
 });

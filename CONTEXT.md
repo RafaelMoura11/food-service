@@ -28,3 +28,6 @@ _Avoid_: Perfil, Role, Papel
 **Permissão**:
 Autorização granular para realizar uma ação específica sobre um recurso do sistema (ex.: criar, editar, listar ou excluir um cadastro de um módulo).
 _Avoid_: Permission
+
+**Módulo Cadastrável**:
+Módulo de cadastro simples — cada registro tem apenas um nome — com CRUD e Permissões (`slug.listar/criar/editar/excluir`) independentes dos demais módulos, agrupado no menu lateral sob "Cadastráveis" (ex.: Produtos, Filial, Fornecedores). Implementado por um mecanismo genérico único (ver ADR-0003); adicionar um novo módulo Cadastrável é uma alteração de configuração, não código novo.

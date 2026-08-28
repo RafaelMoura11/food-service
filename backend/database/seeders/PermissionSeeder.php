@@ -13,11 +13,14 @@ class PermissionSeeder extends Seeder
 
     /**
      * Cria as Permissões granulares (módulo.ação) usadas para restringir o
-     * acesso a cada módulo do sistema.
+     * acesso a cada módulo do sistema, incluindo um módulo por entrada de
+     * config('cadastraveis.modules').
      */
     public function run(): void
     {
-        foreach (self::MODULES as $module) {
+        $modules = [...self::MODULES, ...array_keys(config('cadastraveis.modules'))];
+
+        foreach ($modules as $module) {
             foreach (self::ACTIONS as $action) {
                 Permission::firstOrCreate([
                     'name' => "{$module}.{$action}",

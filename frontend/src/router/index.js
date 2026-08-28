@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { CADASTRAVEL_MODULES, permissionsFor } from '../config/cadastraveis'
 import { useAuth } from '../composables/useAuth'
+import CadastravelItems from '../views/CadastravelItems.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Login from '../views/Login.vue'
 import Roles from '../views/Roles.vue'
@@ -29,6 +31,19 @@ const routes = [
       anyPermission: ['funcoes.listar', 'funcoes.criar', 'funcoes.editar', 'funcoes.excluir'],
     },
   },
+  // Uma rota por módulo Cadastrável (src/config/cadastraveis.js), todas
+  // apontando para o mesmo componente genérico. Novo módulo Cadastrável =
+  // nova entrada nesse config, sem tocar em rota/componente.
+  ...CADASTRAVEL_MODULES.map(({ slug, label }) => ({
+    path: `/cadastraveis/${slug}`,
+    name: `cadastraveis-${slug}`,
+    component: CadastravelItems,
+    props: { module: slug, label },
+    meta: {
+      requiresAuth: true,
+      anyPermission: permissionsFor(slug),
+    },
+  })),
 ]
 
 export function createAppRouter(history = createWebHistory()) {
