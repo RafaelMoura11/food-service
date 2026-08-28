@@ -116,7 +116,7 @@ describe('Users', () => {
     await wrapper.find('button.btn-outline-secondary.btn-sm').trigger('click')
     await flushPromises()
 
-    expect(http.get).toHaveBeenCalledWith('/api/roles')
+    expect(http.get).toHaveBeenCalledWith('/api/roles/options')
     const inspetorCheckbox = wrapper.find('#user-role-5')
     const gestorCheckbox = wrapper.find('#user-role-6')
     expect(inspetorCheckbox.element.checked).toBe(true)
@@ -142,7 +142,38 @@ describe('Users', () => {
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Salvar Funções')
-    expect(http.get).not.toHaveBeenCalledWith('/api/roles')
+    expect(http.get).not.toHaveBeenCalledWith('/api/roles/options')
+  })
+
+  it('permite que um usuário só com funcoes.editar veja a lista e atribua Funções, sem ver o formulário de dados', async () => {
+    setPermissions(['funcoes.editar'])
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local', roles: [] }],
+    })
+    http.get.mockResolvedValueOnce({ data: [{ id: 6, name: 'Gestor' }] })
+    http.put.mockResolvedValueOnce({ data: {} })
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local', roles: [{ id: 6, name: 'Gestor' }] }],
+    })
+
+    const wrapper = mount(Users)
+    await flushPromises()
+
+    expect(http.get).toHaveBeenCalledWith('/api/users')
+    expect(wrapper.text()).toContain('Ana')
+    expect(wrapper.find('button.btn-outline-secondary.btn-sm').exists()).toBe(false)
+
+    await wrapper.find('button.btn-outline-primary.btn-sm').trigger('click')
+    await flushPromises()
+
+    expect(http.get).toHaveBeenCalledWith('/api/roles/options')
+    expect(wrapper.find('#user-name').exists()).toBe(false)
+
+    await wrapper.find('#user-role-6').setValue(true)
+    await wrapper.findAll('form')[0].trigger('submit.prevent')
+    await flushPromises()
+
+    expect(http.put).toHaveBeenCalledWith('/api/users/1/roles', { roles: [6] })
   })
 
   it('remove um usuário ao confirmar a exclusão', async () => {

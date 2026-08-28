@@ -16,6 +16,17 @@ it('permite que um usuário com permissão liste os usuários cadastrados', func
     expect($response->json())->toHaveCount(3);
 });
 
+it('permite que um usuário com permissão sobre o módulo Função liste os usuários para atribuir Funções', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('funcoes.editar');
+    User::factory()->count(2)->create();
+
+    $response = $this->actingAs($user)->getJson('/api/users');
+
+    $response->assertOk();
+    expect($response->json())->toHaveCount(3);
+});
+
 it('bloqueia a listagem de usuários para quem não tem a permissão', function () {
     $user = User::factory()->create();
 

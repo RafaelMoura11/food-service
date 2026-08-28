@@ -15,6 +15,11 @@ class RoleController extends Controller
         return response()->json(Role::with('permissions:id,name')->orderBy('name')->get());
     }
 
+    public function options(): JsonResponse
+    {
+        return response()->json(Role::orderBy('name')->get(['id', 'name']));
+    }
+
     public function store(StoreRoleRequest $request): JsonResponse
     {
         $data = $request->validated();

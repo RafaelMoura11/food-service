@@ -7,11 +7,16 @@ use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
     public function index(): JsonResponse
     {
+        // Também acessível a quem só tem funcoes.editar: atribuir Funções a um
+        // Usuário existente exige poder ver quem são os Usuários cadastrados.
+        abort_unless(Gate::any(['usuarios.listar', 'funcoes.editar']), 403);
+
         return response()->json(User::with('roles:id,name')->orderBy('name')->get());
     }
 

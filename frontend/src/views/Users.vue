@@ -21,7 +21,9 @@ const rolesError = ref('')
 const rolesSubmitting = ref(false)
 
 async function loadUsers() {
-  if (!can('usuarios.listar')) {
+  // Ver a lista também é necessário para quem só tem funcoes.editar, para
+  // escolher a qual Usuário atribuir Funções.
+  if (!can('usuarios.listar') && !can('funcoes.editar')) {
     loading.value = false
     return
   }
@@ -49,7 +51,7 @@ function resetForm() {
 
 async function loadRoles() {
   try {
-    const { data } = await http.get('/api/roles')
+    const { data } = await http.get('/api/roles/options')
     availableRoles.value = data
   } catch {
     rolesError.value = 'Não foi possível carregar as funções.'
@@ -152,7 +154,7 @@ onMounted(loadUsers)
       </div>
 
       <div v-if="showForm" class="card-body border-bottom">
-        <form @submit.prevent="handleSubmit">
+        <form v-if="!editingId || can('usuarios.editar')" @submit.prevent="handleSubmit">
           <div class="mb-3">
             <label for="user-name" class="form-label">Nome</label>
             <input id="user-name" v-model="form.name" type="text" class="form-control" required>
@@ -212,7 +214,7 @@ onMounted(loadUsers)
       </div>
 
       <div class="card-body">
-        <p v-if="!can('usuarios.listar')" class="text-muted mb-0">
+        <p v-if="!can('usuarios.listar') && !can('funcoes.editar')" class="text-muted mb-0">
           Você não tem permissão para listar os usuários cadastrados.
         </p>
         <p v-else-if="error" class="text-danger" role="alert">{{ error }}</p>
@@ -223,7 +225,7 @@ onMounted(loadUsers)
               <th>Nome</th>
               <th>E-mail</th>
               <th>Funções</th>
-              <th v-if="can('usuarios.editar') || can('usuarios.excluir')">Ações</th>
+              <th v-if="can('usuarios.editar') || can('usuarios.excluir') || can('funcoes.editar')">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -231,7 +233,7 @@ onMounted(loadUsers)
               <td>{{ u.name }}</td>
               <td>{{ u.email }}</td>
               <td>{{ (u.roles ?? []).map((role) => role.name).join(', ') }}</td>
-              <td v-if="can('usuarios.editar') || can('usuarios.excluir')">
+              <td v-if="can('usuarios.editar') || can('usuarios.excluir') || can('funcoes.editar')">
                 <button
                   v-if="can('usuarios.editar')"
                   type="button"
@@ -239,6 +241,14 @@ onMounted(loadUsers)
                   @click="openEditForm(u)"
                 >
                   Editar
+                </button>
+                <button
+                  v-if="!can('usuarios.editar') && can('funcoes.editar')"
+                  type="button"
+                  class="btn btn-outline-primary btn-sm me-2"
+                  @click="openEditForm(u)"
+                >
+                  Funções
                 </button>
                 <button
                   v-if="can('usuarios.excluir')"
