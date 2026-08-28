@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import Dashboard from '../views/Dashboard.vue'
 import Login from '../views/Login.vue'
+import Roles from '../views/Roles.vue'
 import Users from '../views/Users.vue'
 
 const routes = [
@@ -19,13 +20,22 @@ const routes = [
       anyPermission: ['usuarios.listar', 'usuarios.criar', 'usuarios.editar', 'usuarios.excluir'],
     },
   },
+  {
+    path: '/funcoes',
+    name: 'roles',
+    component: Roles,
+    meta: {
+      requiresAuth: true,
+      anyPermission: ['funcoes.listar', 'funcoes.criar', 'funcoes.editar', 'funcoes.excluir'],
+    },
+  },
 ]
 
 export function createAppRouter(history = createWebHistory()) {
   const router = createRouter({ history, routes })
 
   router.beforeEach(async (to) => {
-    const { user, fetchUser, can } = useAuth()
+    const { user, fetchUser, canAny } = useAuth()
 
     if (user.value === undefined) {
       await fetchUser()
@@ -35,7 +45,7 @@ export function createAppRouter(history = createWebHistory()) {
       return { name: 'login' }
     }
 
-    if (to.meta.anyPermission && !to.meta.anyPermission.some(can)) {
+    if (to.meta.anyPermission && !canAny(to.meta.anyPermission)) {
       return { name: 'dashboard' }
     }
 

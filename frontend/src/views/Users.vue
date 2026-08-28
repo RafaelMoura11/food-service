@@ -15,6 +15,11 @@ const form = reactive({ name: '', email: '', password: '', password_confirmation
 const formErrors = ref({})
 const submitting = ref(false)
 
+const availableRoles = ref([])
+const selectedRoleIds = ref([])
+const rolesError = ref('')
+const rolesSubmitting = ref(false)
+
 async function loadUsers() {
   if (!can('usuarios.listar')) {
     loading.value = false
@@ -39,6 +44,16 @@ function resetForm() {
   form.password = ''
   form.password_confirmation = ''
   formErrors.value = {}
+  selectedRoleIds.value = []
+}
+
+async function loadRoles() {
+  try {
+    const { data } = await http.get('/api/roles')
+    availableRoles.value = data
+  } catch {
+    rolesError.value = 'Não foi possível carregar as funções.'
+  }
 }
 
 function openCreateForm() {
@@ -52,13 +67,32 @@ function openEditForm(user) {
   resetForm()
   form.name = user.name
   form.email = user.email
+  selectedRoleIds.value = (user.roles ?? []).map((role) => role.id)
   showForm.value = true
+
+  if (can('funcoes.editar')) {
+    loadRoles()
+  }
 }
 
 function closeForm() {
   showForm.value = false
   editingId.value = null
   resetForm()
+}
+
+async function handleRolesSubmit() {
+  rolesSubmitting.value = true
+  rolesError.value = ''
+
+  try {
+    await http.put(`/api/users/${editingId.value}/roles`, { roles: selectedRoleIds.value })
+    await loadUsers()
+  } catch {
+    rolesError.value = 'Não foi possível atualizar as funções do usuário.'
+  } finally {
+    rolesSubmitting.value = false
+  }
 }
 
 async function handleSubmit() {
@@ -155,6 +189,26 @@ onMounted(loadUsers)
           <button type="submit" class="btn btn-primary" :disabled="submitting">Salvar</button>
           <button type="button" class="btn btn-outline-secondary ms-2" @click="closeForm">Cancelar</button>
         </form>
+
+        <div v-if="editingId && can('funcoes.editar')" class="mt-4">
+          <h5>Funções</h5>
+          <p v-if="rolesError" class="text-danger" role="alert">{{ rolesError }}</p>
+          <form @submit.prevent="handleRolesSubmit">
+            <div v-for="role in availableRoles" :key="role.id" class="form-check">
+              <input
+                :id="`user-role-${role.id}`"
+                v-model="selectedRoleIds"
+                type="checkbox"
+                class="form-check-input"
+                :value="role.id"
+              >
+              <label :for="`user-role-${role.id}`" class="form-check-label">{{ role.name }}</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mt-2" :disabled="rolesSubmitting">
+              Salvar Funções
+            </button>
+          </form>
+        </div>
       </div>
 
       <div class="card-body">
@@ -168,6 +222,7 @@ onMounted(loadUsers)
             <tr>
               <th>Nome</th>
               <th>E-mail</th>
+              <th>Funções</th>
               <th v-if="can('usuarios.editar') || can('usuarios.excluir')">Ações</th>
             </tr>
           </thead>
@@ -175,6 +230,7 @@ onMounted(loadUsers)
             <tr v-for="u in users" :key="u.id">
               <td>{{ u.name }}</td>
               <td>{{ u.email }}</td>
+              <td>{{ (u.roles ?? []).map((role) => role.name).join(', ') }}</td>
               <td v-if="can('usuarios.editar') || can('usuarios.excluir')">
                 <button
                   v-if="can('usuarios.editar')"

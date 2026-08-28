@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(User::orderBy('name')->get());
+        return response()->json(User::with('roles:id,name')->orderBy('name')->get());
     }
 
     public function store(StoreUserRequest $request): JsonResponse

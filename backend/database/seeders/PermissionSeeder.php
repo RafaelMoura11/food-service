@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionSeeder extends Seeder
 {
-    private const MODULES = ['usuarios'];
+    private const MODULES = ['usuarios', 'funcoes'];
 
     private const ACTIONS = ['listar', 'criar', 'editar', 'excluir'];
 

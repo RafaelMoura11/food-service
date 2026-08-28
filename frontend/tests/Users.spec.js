@@ -94,6 +94,57 @@ describe('Users', () => {
     expect(wrapper.text()).not.toContain('Excluir')
   })
 
+  it('permite atribuir funções a um usuário existente', async () => {
+    setPermissions(['usuarios.listar', 'usuarios.editar', 'funcoes.editar'])
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local', roles: [{ id: 5, name: 'Inspetor' }] }],
+    })
+    http.get.mockResolvedValueOnce({
+      data: [
+        { id: 5, name: 'Inspetor' },
+        { id: 6, name: 'Gestor' },
+      ],
+    })
+    http.put.mockResolvedValueOnce({ data: {} })
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local', roles: [{ id: 6, name: 'Gestor' }] }],
+    })
+
+    const wrapper = mount(Users)
+    await flushPromises()
+
+    await wrapper.find('button.btn-outline-secondary.btn-sm').trigger('click')
+    await flushPromises()
+
+    expect(http.get).toHaveBeenCalledWith('/api/roles')
+    const inspetorCheckbox = wrapper.find('#user-role-5')
+    const gestorCheckbox = wrapper.find('#user-role-6')
+    expect(inspetorCheckbox.element.checked).toBe(true)
+
+    await inspetorCheckbox.setValue(false)
+    await gestorCheckbox.setValue(true)
+    await wrapper.findAll('form')[1].trigger('submit.prevent')
+    await flushPromises()
+
+    expect(http.put).toHaveBeenCalledWith('/api/users/1/roles', { roles: [6] })
+  })
+
+  it('não mostra a atribuição de funções para quem não tem a permissão sobre o módulo Função', async () => {
+    setPermissions(['usuarios.listar', 'usuarios.editar'])
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local', roles: [] }],
+    })
+
+    const wrapper = mount(Users)
+    await flushPromises()
+
+    await wrapper.find('button.btn-outline-secondary.btn-sm').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Salvar Funções')
+    expect(http.get).not.toHaveBeenCalledWith('/api/roles')
+  })
+
   it('remove um usuário ao confirmar a exclusão', async () => {
     setPermissions(['usuarios.listar', 'usuarios.excluir'])
     http.get.mockResolvedValueOnce({ data: [{ id: 1, name: 'Ana', email: 'ana@foodservice.local' }] })

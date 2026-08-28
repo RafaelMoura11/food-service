@@ -30,6 +30,10 @@ function can(permission) {
   return user.value?.permissions?.includes(permission) ?? false
 }
 
+function canAny(permissions) {
+  return permissions.some(can)
+}
+
 export function useAuth() {
-  return { user, fetchUser, login, logout, can }
+  return { user, fetchUser, login, logout, can, canAny }
 }
