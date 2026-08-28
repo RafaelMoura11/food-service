@@ -1,0 +1,4 @@
+// Design system do projeto: apenas o SCSS do AdminLTE (que já traz o Bootstrap
+// junto). Nenhum JS do AdminLTE nem do Bootstrap é carregado — a interatividade
+// (sidebar, tema, menus) é implementada como estado reativo do Vue (ADR-0002).
+@import "admin-lte/src/scss/adminlte";
