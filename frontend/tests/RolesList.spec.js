@@ -28,11 +28,18 @@ describe('RolesList', () => {
     useAuth().user.value = undefined
   })
 
-  it('lista as funções cadastradas com suas permissões', async () => {
+  it('lista as funções cadastradas com um resumo das permissões por módulo', async () => {
     setPermissions(['funcoes.listar'])
     http.get.mockResolvedValueOnce({
       data: [
-        { id: 1, name: 'Inspetor', permissions: [{ id: 1, name: 'usuarios.listar' }] },
+        {
+          id: 1,
+          name: 'Inspetor',
+          permissions: [
+            { id: 1, name: 'usuarios.listar' },
+            { id: 2, name: 'usuarios.editar' },
+          ],
+        },
         { id: 2, name: 'Gestor', permissions: [] },
       ],
     })
@@ -42,8 +49,22 @@ describe('RolesList', () => {
 
     expect(http.get).toHaveBeenCalledWith('/api/roles')
     expect(wrapper.text()).toContain('Inspetor')
-    expect(wrapper.text()).toContain('usuarios.listar')
+    expect(wrapper.text()).toContain('Usuários: 2')
+    expect(wrapper.text()).toContain('2 permissões ativas em 1 módulos')
     expect(wrapper.text()).toContain('Gestor')
+    expect(wrapper.text()).toContain('Nenhuma permissão')
+  })
+
+  it('mostra um selo de Acesso Total para a Função Administrador, sem listar permissões', async () => {
+    setPermissions(['funcoes.listar'])
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'Administrador', permissions: [] }],
+    })
+
+    const wrapper = await mountRolesList()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Acesso Total')
   })
 
   it('linka o botão de nova função para a tela de criação dedicada', async () => {

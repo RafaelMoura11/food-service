@@ -32,3 +32,29 @@ export const CADASTRAVEL_MODULES = [
 export function permissionsFor(slug) {
   return [`${slug}.listar`, `${slug}.criar`, `${slug}.editar`, `${slug}.excluir`]
 }
+
+// Os dois módulos que não são Cadastráveis (Usuários e Funções) têm rótulo
+// próprio; os demais vêm de CADASTRAVEL_MODULES. Usado sempre que exibimos o
+// nome de um módulo pra humanos (ex.: tela de Funções e atribuição de Permissão).
+const CORE_MODULE_LABELS = { usuarios: 'Usuários', funcoes: 'Funções' }
+const CADASTRAVEL_MODULE_LABELS = Object.fromEntries(CADASTRAVEL_MODULES.map((m) => [m.slug, m.label]))
+
+export function moduleLabel(module) {
+  return CORE_MODULE_LABELS[module] ?? CADASTRAVEL_MODULE_LABELS[module] ?? module
+}
+
+// As quatro ações de Permissão (backend/database/seeders/PermissionSeeder.php)
+// são as mesmas em todo módulo, então o rótulo e a descrição vivem aqui uma
+// única vez em vez de repetidos por módulo.
+export const PERMISSION_ACTIONS = {
+  listar: { label: 'Listar', description: 'Permite visualizar a lista de registros deste módulo.' },
+  criar: { label: 'Criar', description: 'Permite cadastrar novos registros neste módulo.' },
+  editar: { label: 'Editar', description: 'Permite editar registros já existentes neste módulo.' },
+  excluir: { label: 'Excluir', description: 'Permite remover registros deste módulo.' },
+}
+
+const ACTION_ORDER = Object.keys(PERMISSION_ACTIONS)
+
+export function comparePermissionsByAction(a, b) {
+  return ACTION_ORDER.indexOf(a.name.split('.')[1]) - ACTION_ORDER.indexOf(b.name.split('.')[1])
+}
