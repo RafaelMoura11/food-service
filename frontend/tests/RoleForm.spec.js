@@ -10,6 +10,13 @@ vi.mock('../src/api/http', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
 
+// wrapper.find(...).isVisible() é inconsistente em jsdom pra v-show (usa
+// checkVisibility, que o jsdom não implementa de forma confiável), então
+// checamos o style aplicado pelo v-show diretamente.
+function isRowHidden(wrapper) {
+  return (wrapper.find('.row.g-3').attributes('style') ?? '').includes('display: none')
+}
+
 async function mountForm(props, path = '/funcoes/novo') {
   useAuth().user.value = { id: 1, name: 'Admin', permissions: ['funcoes.criar', 'funcoes.editar'] }
 
@@ -86,6 +93,66 @@ describe('RoleForm', () => {
 
     expect(wrapper.text()).toContain('Função não encontrada')
     expect(wrapper.find('form').exists()).toBe(false)
+  })
+
+  it('começa com os módulos recolhidos ao criar uma função nova', async () => {
+    http.get.mockResolvedValueOnce({
+      data: [
+        { id: 1, name: 'usuarios.listar' },
+        { id: 2, name: 'usuarios.criar' },
+      ],
+    })
+
+    const { wrapper } = await mountForm()
+    await flushPromises()
+
+    const toggle = wrapper.find('button[aria-expanded]')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(toggle.text()).toContain('Permissões de "Usuários"')
+    expect(isRowHidden(wrapper)).toBe(true)
+  })
+
+  it('expande e recolhe o módulo ao clicar no cabeçalho', async () => {
+    http.get.mockResolvedValueOnce({
+      data: [
+        { id: 1, name: 'usuarios.listar' },
+        { id: 2, name: 'usuarios.criar' },
+      ],
+    })
+
+    const { wrapper } = await mountForm()
+    await flushPromises()
+
+    const toggle = wrapper.find('button[aria-expanded]')
+    await toggle.trigger('click')
+
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(toggle.text()).toBe('Usuários')
+    expect(isRowHidden(wrapper)).toBe(false)
+
+    await toggle.trigger('click')
+
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(isRowHidden(wrapper)).toBe(true)
+  })
+
+  it('começa com o módulo expandido ao editar uma função que já tem permissão marcada nele', async () => {
+    http.get.mockResolvedValueOnce({
+      data: [
+        { id: 1, name: 'usuarios.listar' },
+        { id: 2, name: 'usuarios.criar' },
+      ],
+    })
+    http.get.mockResolvedValueOnce({
+      data: [{ id: 7, name: 'Inspetor', permissions: [{ id: 1, name: 'usuarios.listar' }] }],
+    })
+
+    const { wrapper } = await mountForm({ id: '7' }, '/funcoes/7/editar')
+    await flushPromises()
+
+    const toggle = wrapper.find('button[aria-expanded]')
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(isRowHidden(wrapper)).toBe(false)
   })
 
   it('o botão cancelar leva de volta para a listagem', async () => {

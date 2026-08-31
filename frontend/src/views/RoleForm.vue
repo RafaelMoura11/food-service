@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import http from '../api/http'
+import { comparePermissionsByAction, moduleLabel, PERMISSION_ACTIONS } from '../config/cadastraveis'
 
 const props = defineProps({
   id: { type: String, default: null },
@@ -28,8 +29,46 @@ const permissionsByModule = computed(() => {
     groups[module].push(permission)
   }
 
+  for (const permissions of Object.values(groups)) {
+    permissions.sort(comparePermissionsByAction)
+  }
+
   return groups
 })
+
+const expandedModules = ref({})
+
+function isExpanded(module) {
+  return !!expandedModules.value[module]
+}
+
+function toggleModule(module) {
+  expandedModules.value[module] = !isExpanded(module)
+}
+
+// Ao editar, começa expandido só quem já tem alguma Permissão marcada, pra não
+// obrigar a abrir os ~27 módulos um a um pra ver o que a Função já tem.
+function initExpandedModules() {
+  const expanded = {}
+
+  for (const [module, permissions] of Object.entries(permissionsByModule.value)) {
+    expanded[module] = permissions.some((permission) => form.permissionIds.includes(permission.id))
+  }
+
+  expandedModules.value = expanded
+}
+
+function actionOf(permission) {
+  return permission.name.split('.')[1]
+}
+
+function actionLabel(permission) {
+  return PERMISSION_ACTIONS[actionOf(permission)]?.label ?? actionOf(permission)
+}
+
+function actionDescription(permission) {
+  return PERMISSION_ACTIONS[actionOf(permission)]?.description ?? ''
+}
 
 async function loadPermissions() {
   try {
@@ -85,6 +124,8 @@ onMounted(async () => {
   if (isEditing.value) {
     await loadRole()
   }
+
+  initExpandedModules()
 })
 </script>
 
@@ -105,17 +146,38 @@ onMounted(async () => {
           </div>
           <div class="mb-3">
             <label class="form-label d-block">Permissões</label>
-            <div v-for="(permissions, module) in permissionsByModule" :key="module" class="mb-2">
-              <strong class="d-block text-capitalize">{{ module }}</strong>
-              <div v-for="permission in permissions" :key="permission.id" class="form-check form-check-inline">
-                <input
-                  :id="`permission-${permission.id}`"
-                  v-model="form.permissionIds"
-                  type="checkbox"
-                  class="form-check-input"
-                  :value="permission.id"
-                >
-                <label :for="`permission-${permission.id}`" class="form-check-label">{{ permission.name }}</label>
+            <div v-for="(permissions, module) in permissionsByModule" :key="module" class="border rounded p-3 mb-3">
+              <button
+                type="button"
+                class="btn btn-link p-0 text-body text-decoration-none d-flex align-items-center justify-content-between w-100"
+                :aria-expanded="isExpanded(module)"
+                @click="toggleModule(module)"
+              >
+                <strong>
+                  {{ isExpanded(module) ? moduleLabel(module) : `Permissões de "${moduleLabel(module)}"` }}
+                </strong>
+                <i
+                  class="bi"
+                  :class="isExpanded(module) ? 'bi-chevron-down' : 'bi-chevron-right'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+              <div v-show="isExpanded(module)" class="row g-3 mt-1">
+                <div v-for="permission in permissions" :key="permission.id" class="col-12 col-md-6">
+                  <div class="form-check">
+                    <input
+                      :id="`permission-${permission.id}`"
+                      v-model="form.permissionIds"
+                      type="checkbox"
+                      class="form-check-input"
+                      :value="permission.id"
+                    >
+                    <label :for="`permission-${permission.id}`" class="form-check-label">
+                      {{ actionLabel(permission) }}
+                    </label>
+                    <p class="text-muted small mb-0">{{ actionDescription(permission) }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
